@@ -1,0 +1,19 @@
+<title>Control Tiendas</title>
+<style>
+/* Marco de teléfono en compu; pantalla completa en celular. */
+:root { --bg: #f3efe9; --frame: #1d1a17; --fg: #3b342d; --muted: #8a7f73; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #17140f; --frame: #000; --fg: #ece5dc; --muted: #9b9084; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #17140f; --frame: #000; --fg: #ece5dc; --muted: #9b9084; color-scheme: dark }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: "Figtree", system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-block: 24px; box-sizing: border-box; }
+.phone { width: 390px; height: min(844px, calc(100vh - 90px)); border: 12px solid var(--frame); border-radius: 48px; overflow: hidden; background: #fff; box-shadow: 0 24px 60px rgba(40, 25, 10, .25); }
+.phone iframe { width: 100%; height: 100%; border: 0; display: block; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+@media (max-width: 520px) {
+  body { padding: 0; gap: 0; }
+  .phone { width: 100%; height: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .note { display: none; }
+}
+</style>
+<div class="phone"><iframe src="app.html" title="Control Tiendas · Kigo Pick"></iframe></div>
+<p class="note">Vista previa · datos de ejemplo</p>
