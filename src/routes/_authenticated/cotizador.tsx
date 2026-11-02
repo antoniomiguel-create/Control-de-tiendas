@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Calculator, CreditCard, Repeat, Store } from "lucide-react";
+import { Calculator, CreditCard, Minus, Monitor, Plus, Repeat, Store } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Card, SectionTitle, Shell } from "@/components/ui-kit";
@@ -11,12 +11,14 @@ export const Route = createFileRoute("/_authenticated/cotizador")({
       { title: "Cotizador — Control Tiendas · Kigo Pick" },
       {
         name: "description",
-        content: "Calcula el costo de inscripción y la comisión o suscripción estimada para nuevas tiendas.",
+        content:
+          "Calcula el costo de inscripción y la comisión o suscripción estimada para nuevas tiendas.",
       },
       { property: "og:title", content: "Cotizador — Control Tiendas · Kigo Pick" },
       {
         property: "og:description",
-        content: "Cotiza el alta de tiendas: inscripción, comisión o suscripción mensual y proyección anual.",
+        content:
+          "Cotiza el alta de tiendas: inscripción, comisión o suscripción mensual y proyección anual.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -26,7 +28,11 @@ export const Route = createFileRoute("/_authenticated/cotizador")({
 });
 
 const mxn = (n: number) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 const num = (s: string) => {
   const n = Number(s.replace(/[^\d.]/g, ""));
@@ -34,6 +40,16 @@ const num = (s: string) => {
 };
 
 type Modelo = "transaccional" | "saas";
+
+/** Catálogo de ejemplo: precios sugeridos, editables en la cotización. */
+const HARDWARE = [
+  { id: "tablet", nombre: "Tablet punto de venta", precio: 3500 },
+  { id: "impresora", nombre: "Impresora de tickets", precio: 1800 },
+  { id: "cajon", nombre: "Cajón de dinero", precio: 1200 },
+  { id: "lector", nombre: "Lector de códigos QR", precio: 900 },
+] as const;
+
+type HardwareId = (typeof HARDWARE)[number]["id"];
 
 function Cotizador() {
   const [modelo, setModelo] = useState<Modelo | null>(null);
@@ -43,6 +59,21 @@ function Cotizador() {
   const [ventasMes, setVentasMes] = useState("30000");
   const [cuotaMensual, setCuotaMensual] = useState("");
   const [rentaSemanal, setRentaSemanal] = useState("");
+  const [hwCantidad, setHwCantidad] = useState<Record<HardwareId, number>>({
+    tablet: 0,
+    impresora: 0,
+    cajon: 0,
+    lector: 0,
+  });
+  const [hwPrecio, setHwPrecio] = useState<Record<HardwareId, string>>({
+    tablet: "3500",
+    impresora: "1800",
+    cajon: "1200",
+    lector: "900",
+  });
+
+  const cambiarCantidad = (id: HardwareId, delta: number) =>
+    setHwCantidad((prev) => ({ ...prev, [id]: Math.max(0, prev[id] + delta) }));
 
   const esSaas = modelo === "saas";
 
@@ -57,11 +88,39 @@ function Cotizador() {
     const comisionMensual = t * ((ventas * pct) / 100);
     const suscripcionMensual = t * cuota;
     const rentaMensual = t * renta;
-    const ingresoMensual = esSaas ? suscripcionMensual + rentaMensual : comisionMensual + rentaMensual;
-    const primerMes = totalInscripcion + ingresoMensual;
-    const anual = totalInscripcion + ingresoMensual * 12;
-    return { t, totalInscripcion, comisionMensual, suscripcionMensual, rentaMensual, ingresoMensual, primerMes, anual };
-  }, [tiendas, costoInscripcion, comisionPct, ventasMes, cuotaMensual, rentaSemanal, esSaas]);
+    const ingresoMensual = esSaas
+      ? suscripcionMensual + rentaMensual
+      : comisionMensual + rentaMensual;
+    const totalHardware = HARDWARE.reduce(
+      (suma, h) => suma + hwCantidad[h.id] * num(hwPrecio[h.id]),
+      0,
+    );
+    const piezasHardware = HARDWARE.reduce((suma, h) => suma + hwCantidad[h.id], 0);
+    const primerMes = totalInscripcion + totalHardware + ingresoMensual;
+    const anual = totalInscripcion + totalHardware + ingresoMensual * 12;
+    return {
+      t,
+      totalInscripcion,
+      comisionMensual,
+      suscripcionMensual,
+      rentaMensual,
+      ingresoMensual,
+      totalHardware,
+      piezasHardware,
+      primerMes,
+      anual,
+    };
+  }, [
+    tiendas,
+    costoInscripcion,
+    comisionPct,
+    ventasMes,
+    cuotaMensual,
+    rentaSemanal,
+    esSaas,
+    hwCantidad,
+    hwPrecio,
+  ]);
 
   const opcionesModelo: { id: Modelo; titulo: string; desc: string; icono: typeof Repeat }[] = [
     {
@@ -84,7 +143,9 @@ function Cotizador() {
         {modelo === null ? (
           <Card>
             <p className="text-[14px] font-bold tracking-[-0.02em]">¿Qué modelo quieres cotizar?</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">Elige cómo gana Kigo Pick con las tiendas</p>
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              Elige cómo gana Kigo Pick con las tiendas
+            </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {opcionesModelo.map((op) => {
                 const Icono = op.icono;
@@ -98,7 +159,9 @@ function Cotizador() {
                     <span className="grid h-10 w-10 place-items-center rounded-2xl bg-muted">
                       <Icono className="h-5 w-5 text-primary" strokeWidth={2.4} />
                     </span>
-                    <span className="text-[15px] font-extrabold tracking-[-0.02em]">{op.titulo}</span>
+                    <span className="text-[15px] font-extrabold tracking-[-0.02em]">
+                      {op.titulo}
+                    </span>
                     <span className="text-[12px] text-muted-foreground">{op.desc}</span>
                   </button>
                 );
@@ -114,6 +177,7 @@ function Cotizador() {
               </p>
               <p className="mt-1 text-[12px] text-muted-foreground">
                 Inscripción + {esSaas ? "suscripción" : "comisión"} + renta del primer mes
+                {r.totalHardware > 0 ? " + hardware" : ""}
               </p>
             </Card>
 
@@ -219,6 +283,70 @@ function Cotizador() {
               </label>
             </div>
 
+            <SectionTitle
+              action={
+                r.totalHardware > 0 ? (
+                  <span className="text-sm font-bold text-primary">{mxn(r.totalHardware)}</span>
+                ) : undefined
+              }
+            >
+              Hardware
+            </SectionTitle>
+            <Card className="divide-y divide-border p-0">
+              {HARDWARE.map((h) => {
+                const cantidad = hwCantidad[h.id];
+                return (
+                  <div key={h.id} className="flex items-center gap-3 px-4 py-3.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-bold tracking-[-0.02em]">{h.nombre}</p>
+                      <label className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
+                        <span>$</span>
+                        <input
+                          id={`hw-precio-${h.id}`}
+                          aria-label={`Precio de ${h.nombre}`}
+                          className="w-20 rounded-lg border border-border bg-background px-2 py-1 text-[12px] font-semibold text-foreground"
+                          inputMode="numeric"
+                          value={hwPrecio[h.id]}
+                          onChange={(e) =>
+                            setHwPrecio((prev) => ({
+                              ...prev,
+                              [h.id]: e.target.value.replace(/\D/g, ""),
+                            }))
+                          }
+                        />
+                        <span>c/u</span>
+                      </label>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        aria-label={`Quitar ${h.nombre}`}
+                        onClick={() => cambiarCantidad(h.id, -1)}
+                        disabled={cantidad === 0}
+                        className="grid h-9 w-9 place-items-center rounded-full bg-muted transition-transform active:scale-[0.95] disabled:opacity-40"
+                      >
+                        <Minus className="h-4 w-4" strokeWidth={2.5} />
+                      </button>
+                      <span className="w-6 text-center text-[15px] font-extrabold tabular-nums">
+                        {cantidad}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Agregar ${h.nombre}`}
+                        onClick={() => cambiarCantidad(h.id, 1)}
+                        className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-[0.95]"
+                      >
+                        <Plus className="h-4 w-4" strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </Card>
+            <p className="-mt-2 text-[11px] text-muted-foreground">
+              Precios sugeridos de ejemplo. Puedes cambiarlos en cada equipo.
+            </p>
+
             <SectionTitle>Resultado</SectionTitle>
             <div className="space-y-2 pb-8">
               <Card className="flex items-center gap-3">
@@ -231,8 +359,27 @@ function Cotizador() {
                   </p>
                   <p className="text-[12px] text-muted-foreground">Pago único al dar de alta</p>
                 </div>
-                <p className="text-[15px] font-extrabold tracking-[-0.03em]">{mxn(r.totalInscripcion)}</p>
+                <p className="text-[15px] font-extrabold tracking-[-0.03em]">
+                  {mxn(r.totalInscripcion)}
+                </p>
               </Card>
+
+              {r.totalHardware > 0 && (
+                <Card className="flex items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
+                    <Monitor className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-bold tracking-[-0.02em]">
+                      Hardware ({r.piezasHardware} {r.piezasHardware === 1 ? "equipo" : "equipos"})
+                    </p>
+                    <p className="text-[12px] text-muted-foreground">Pago único</p>
+                  </div>
+                  <p className="text-[15px] font-extrabold tracking-[-0.03em]">
+                    {mxn(r.totalHardware)}
+                  </p>
+                </Card>
+              )}
 
               {esSaas ? (
                 <Card className="flex items-center gap-3">
@@ -284,8 +431,12 @@ function Cotizador() {
               <Card className="border-primary/30 bg-primary/5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[14px] font-bold tracking-[-0.02em]">Proyección a 12 meses</p>
-                    <p className="text-[12px] text-muted-foreground">Inscripción + 12 meses de ingresos</p>
+                    <p className="text-[14px] font-bold tracking-[-0.02em]">
+                      Proyección a 12 meses
+                    </p>
+                    <p className="text-[12px] text-muted-foreground">
+                      Inscripción{r.totalHardware > 0 ? " + hardware" : ""} + 12 meses de ingresos
+                    </p>
                   </div>
                   <p className="text-[20px] font-extrabold tracking-[-0.03em] text-primary">
                     {mxn(r.anual)}
