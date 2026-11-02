@@ -39,7 +39,7 @@ const num = (s: string) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-type Modelo = "transaccional" | "saas";
+type Modelo = "transaccional" | "saas" | "hardware";
 
 /** Catálogo de ejemplo: precios sugeridos, editables en la cotización. */
 const HARDWARE = [
@@ -76,6 +76,7 @@ function Cotizador() {
     setHwCantidad((prev) => ({ ...prev, [id]: Math.max(0, prev[id] + delta) }));
 
   const esSaas = modelo === "saas";
+  const esHardware = modelo === "hardware";
 
   const r = useMemo(() => {
     const t = Math.max(0, Math.floor(num(tiendas)));
@@ -96,8 +97,8 @@ function Cotizador() {
       0,
     );
     const piezasHardware = HARDWARE.reduce((suma, h) => suma + hwCantidad[h.id], 0);
-    const primerMes = totalInscripcion + totalHardware + ingresoMensual;
-    const anual = totalInscripcion + totalHardware + ingresoMensual * 12;
+    const primerMes = totalInscripcion + ingresoMensual;
+    const anual = totalInscripcion + ingresoMensual * 12;
     return {
       t,
       totalInscripcion,
@@ -135,7 +136,15 @@ function Cotizador() {
       desc: "Ganas una cuota mensual fija por cada tienda",
       icono: CreditCard,
     },
+    {
+      id: "hardware",
+      titulo: "Hardware",
+      desc: "Vendes equipo a la tienda con un solo pago",
+      icono: Monitor,
+    },
   ];
+
+  const nombreModelo = esHardware ? "Hardware" : esSaas ? "SAAS" : "Transaccional";
 
   return (
     <Shell title="Cotizador">
@@ -146,7 +155,7 @@ function Cotizador() {
             <p className="mt-1 text-[12px] text-muted-foreground">
               Elige cómo gana Kigo Pick con las tiendas
             </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {opcionesModelo.map((op) => {
                 const Icono = op.icono;
                 return (
@@ -170,16 +179,27 @@ function Cotizador() {
           </Card>
         ) : (
           <>
-            <Card>
-              <p className="text-[13px] text-muted-foreground">Ingreso estimado el primer mes</p>
-              <p className="mt-1 text-[30px] font-extrabold tracking-[-0.04em] text-primary">
-                {mxn(r.primerMes)}
-              </p>
-              <p className="mt-1 text-[12px] text-muted-foreground">
-                Inscripción + {esSaas ? "suscripción" : "comisión"} + renta del primer mes
-                {r.totalHardware > 0 ? " + hardware" : ""}
-              </p>
-            </Card>
+            {esHardware ? (
+              <Card>
+                <p className="text-[13px] text-muted-foreground">Total de hardware</p>
+                <p className="mt-1 text-[30px] font-extrabold tracking-[-0.04em] text-primary">
+                  {mxn(r.totalHardware)}
+                </p>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  Pago único por {r.piezasHardware} {r.piezasHardware === 1 ? "equipo" : "equipos"}
+                </p>
+              </Card>
+            ) : (
+              <Card>
+                <p className="text-[13px] text-muted-foreground">Ingreso estimado el primer mes</p>
+                <p className="mt-1 text-[30px] font-extrabold tracking-[-0.04em] text-primary">
+                  {mxn(r.primerMes)}
+                </p>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  Inscripción + {esSaas ? "suscripción" : "comisión"} + renta del primer mes
+                </p>
+              </Card>
+            )}
 
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-muted-foreground">Modelo:</span>
@@ -188,262 +208,296 @@ function Cotizador() {
                 onClick={() => setModelo(null)}
                 className="rounded-full border border-border bg-muted px-3 py-1 text-[12px] font-bold tracking-[-0.01em] hover:bg-primary/10"
               >
-                {esSaas ? "SAAS" : "Transaccional"} · cambiar
+                {nombreModelo} · cambiar
               </button>
             </div>
 
-            <SectionTitle>Datos de la cotización</SectionTitle>
-            <div className="space-y-3">
-              <label className="block">
-                <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                  ¿Cuántas tiendas?
-                </span>
-                <input
-                  className={inputClass}
-                  inputMode="numeric"
-                  value={tiendas}
-                  onChange={(e) => setTiendas(e.target.value)}
-                  placeholder="1"
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                  Costo de inscripción por tienda
-                </span>
-                <input
-                  className={inputClass}
-                  inputMode="numeric"
-                  value={costoInscripcion}
-                  onChange={(e) => setCostoInscripcion(e.target.value)}
-                  placeholder="2000"
-                />
-                <span className="mt-1 block text-[11px] text-muted-foreground">
-                  Normalmente cobramos {mxn(2000)} por tienda
-                </span>
-              </label>
-
-              {esSaas ? (
-                <label className="block">
-                  <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                    Cuota mensual fija por tienda
-                  </span>
-                  <input
-                    className={inputClass}
-                    inputMode="numeric"
-                    value={cuotaMensual}
-                    onChange={(e) => setCuotaMensual(e.target.value)}
-                    placeholder="1000"
-                  />
-                </label>
-              ) : (
-                <>
+            {!esHardware && (
+              <>
+                <SectionTitle>Datos de la cotización</SectionTitle>
+                <div className="space-y-3">
                   <label className="block">
                     <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                      Comisión sobre ventas (%)
-                    </span>
-                    <input
-                      className={inputClass}
-                      inputMode="decimal"
-                      value={comisionPct}
-                      onChange={(e) => setComisionPct(e.target.value)}
-                      placeholder="15"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                      Ventas mensuales promedio por tienda
+                      ¿Cuántas tiendas?
                     </span>
                     <input
                       className={inputClass}
                       inputMode="numeric"
-                      value={ventasMes}
-                      onChange={(e) => setVentasMes(e.target.value)}
-                      placeholder="30000"
+                      value={tiendas}
+                      onChange={(e) => setTiendas(e.target.value)}
+                      placeholder="1"
                     />
                   </label>
-                </>
-              )}
 
-              <label className="block">
-                <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                  Renta semanal de la tienda (opcional)
-                </span>
-                <input
-                  className={inputClass}
-                  inputMode="numeric"
-                  value={rentaSemanal}
-                  onChange={(e) => setRentaSemanal(e.target.value)}
-                  placeholder="1500"
-                />
-                <span className="mt-1 block text-[11px] text-muted-foreground">
-                  Ej. Renta semanal {mxn(1500)}
-                </span>
-              </label>
-            </div>
+                  <label className="block">
+                    <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                      Costo de inscripción por tienda
+                    </span>
+                    <input
+                      className={inputClass}
+                      inputMode="numeric"
+                      value={costoInscripcion}
+                      onChange={(e) => setCostoInscripcion(e.target.value)}
+                      placeholder="2000"
+                    />
+                    <span className="mt-1 block text-[11px] text-muted-foreground">
+                      Normalmente cobramos {mxn(2000)} por tienda
+                    </span>
+                  </label>
 
-            <SectionTitle
-              action={
-                r.totalHardware > 0 ? (
-                  <span className="text-sm font-bold text-primary">{mxn(r.totalHardware)}</span>
-                ) : undefined
-              }
-            >
-              Hardware
-            </SectionTitle>
-            <Card className="divide-y divide-border p-0">
-              {HARDWARE.map((h) => {
-                const cantidad = hwCantidad[h.id];
-                return (
-                  <div key={h.id} className="flex items-center gap-3 px-4 py-3.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-bold tracking-[-0.02em]">{h.nombre}</p>
-                      <label className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
-                        <span>$</span>
-                        <input
-                          id={`hw-precio-${h.id}`}
-                          aria-label={`Precio de ${h.nombre}`}
-                          className="w-20 rounded-lg border border-border bg-background px-2 py-1 text-[12px] font-semibold text-foreground"
-                          inputMode="numeric"
-                          value={hwPrecio[h.id]}
-                          onChange={(e) =>
-                            setHwPrecio((prev) => ({
-                              ...prev,
-                              [h.id]: e.target.value.replace(/\D/g, ""),
-                            }))
-                          }
-                        />
-                        <span>c/u</span>
-                      </label>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        aria-label={`Quitar ${h.nombre}`}
-                        onClick={() => cambiarCantidad(h.id, -1)}
-                        disabled={cantidad === 0}
-                        className="grid h-9 w-9 place-items-center rounded-full bg-muted transition-transform active:scale-[0.95] disabled:opacity-40"
-                      >
-                        <Minus className="h-4 w-4" strokeWidth={2.5} />
-                      </button>
-                      <span className="w-6 text-center text-[15px] font-extrabold tabular-nums">
-                        {cantidad}
+                  {esSaas ? (
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                        Cuota mensual fija por tienda
                       </span>
-                      <button
-                        type="button"
-                        aria-label={`Agregar ${h.nombre}`}
-                        onClick={() => cambiarCantidad(h.id, 1)}
-                        className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-[0.95]"
-                      >
-                        <Plus className="h-4 w-4" strokeWidth={2.5} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </Card>
-            <p className="-mt-2 text-[11px] text-muted-foreground">
-              Precios sugeridos de ejemplo. Puedes cambiarlos en cada equipo.
-            </p>
+                      <input
+                        className={inputClass}
+                        inputMode="numeric"
+                        value={cuotaMensual}
+                        onChange={(e) => setCuotaMensual(e.target.value)}
+                        placeholder="1000"
+                      />
+                    </label>
+                  ) : (
+                    <>
+                      <label className="block">
+                        <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                          Comisión sobre ventas (%)
+                        </span>
+                        <input
+                          className={inputClass}
+                          inputMode="decimal"
+                          value={comisionPct}
+                          onChange={(e) => setComisionPct(e.target.value)}
+                          placeholder="15"
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                          Ventas mensuales promedio por tienda
+                        </span>
+                        <input
+                          className={inputClass}
+                          inputMode="numeric"
+                          value={ventasMes}
+                          onChange={(e) => setVentasMes(e.target.value)}
+                          placeholder="30000"
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                      Renta semanal de la tienda (opcional)
+                    </span>
+                    <input
+                      className={inputClass}
+                      inputMode="numeric"
+                      value={rentaSemanal}
+                      onChange={(e) => setRentaSemanal(e.target.value)}
+                      placeholder="1500"
+                    />
+                    <span className="mt-1 block text-[11px] text-muted-foreground">
+                      Ej. Renta semanal {mxn(1500)}
+                    </span>
+                  </label>
+                </div>
+              </>
+            )}
+
+            {esHardware && (
+              <>
+                <SectionTitle
+                  action={
+                    r.totalHardware > 0 ? (
+                      <span className="text-sm font-bold text-primary">{mxn(r.totalHardware)}</span>
+                    ) : undefined
+                  }
+                >
+                  Hardware
+                </SectionTitle>
+                <Card className="divide-y divide-border p-0">
+                  {HARDWARE.map((h) => {
+                    const cantidad = hwCantidad[h.id];
+                    return (
+                      <div key={h.id} className="flex items-center gap-3 px-4 py-3.5">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[14px] font-bold tracking-[-0.02em]">{h.nombre}</p>
+                          <label className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
+                            <span>$</span>
+                            <input
+                              id={`hw-precio-${h.id}`}
+                              aria-label={`Precio de ${h.nombre}`}
+                              className="w-20 rounded-lg border border-border bg-background px-2 py-1 text-[12px] font-semibold text-foreground"
+                              inputMode="numeric"
+                              value={hwPrecio[h.id]}
+                              onChange={(e) =>
+                                setHwPrecio((prev) => ({
+                                  ...prev,
+                                  [h.id]: e.target.value.replace(/\D/g, ""),
+                                }))
+                              }
+                            />
+                            <span>c/u</span>
+                          </label>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            aria-label={`Quitar ${h.nombre}`}
+                            onClick={() => cambiarCantidad(h.id, -1)}
+                            disabled={cantidad === 0}
+                            className="grid h-9 w-9 place-items-center rounded-full bg-muted transition-transform active:scale-[0.95] disabled:opacity-40"
+                          >
+                            <Minus className="h-4 w-4" strokeWidth={2.5} />
+                          </button>
+                          <span className="w-6 text-center text-[15px] font-extrabold tabular-nums">
+                            {cantidad}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Agregar ${h.nombre}`}
+                            onClick={() => cambiarCantidad(h.id, 1)}
+                            className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-[0.95]"
+                          >
+                            <Plus className="h-4 w-4" strokeWidth={2.5} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Card>
+                <p className="-mt-2 text-[11px] text-muted-foreground">
+                  Precios sugeridos de ejemplo. Puedes cambiarlos en cada equipo.
+                </p>
+              </>
+            )}
 
             <SectionTitle>Resultado</SectionTitle>
-            <div className="space-y-2 pb-8">
-              <Card className="flex items-center gap-3">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
-                  <Store className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-bold tracking-[-0.02em]">
-                    Inscripción ({r.t} {r.t === 1 ? "tienda" : "tiendas"})
-                  </p>
-                  <p className="text-[12px] text-muted-foreground">Pago único al dar de alta</p>
-                </div>
-                <p className="text-[15px] font-extrabold tracking-[-0.03em]">
-                  {mxn(r.totalInscripcion)}
-                </p>
-              </Card>
+            {esHardware ? (
+              <div className="space-y-2 pb-8">
+                {r.piezasHardware === 0 ? (
+                  <Card>
+                    <p className="text-[13px] text-muted-foreground">
+                      Agrega equipos con el botón + para ver la cotización.
+                    </p>
+                  </Card>
+                ) : (
+                  HARDWARE.filter((h) => hwCantidad[h.id] > 0).map((h) => (
+                    <Card key={h.id} className="flex items-center gap-3">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
+                        <Monitor className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] font-bold tracking-[-0.02em]">{h.nombre}</p>
+                        <p className="text-[12px] text-muted-foreground">
+                          {hwCantidad[h.id]} × {mxn(num(hwPrecio[h.id]))}
+                        </p>
+                      </div>
+                      <p className="text-[15px] font-extrabold tracking-[-0.03em]">
+                        {mxn(hwCantidad[h.id] * num(hwPrecio[h.id]))}
+                      </p>
+                    </Card>
+                  ))
+                )}
 
-              {r.totalHardware > 0 && (
+                <Card className="border-primary/30 bg-primary/5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[14px] font-bold tracking-[-0.02em]">Total a pagar</p>
+                      <p className="text-[12px] text-muted-foreground">Pago único</p>
+                    </div>
+                    <p className="text-[20px] font-extrabold tracking-[-0.03em] text-primary">
+                      {mxn(r.totalHardware)}
+                    </p>
+                  </div>
+                </Card>
+              </div>
+            ) : (
+              <div className="space-y-2 pb-8">
                 <Card className="flex items-center gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
-                    <Monitor className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
+                    <Store className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[14px] font-bold tracking-[-0.02em]">
-                      Hardware ({r.piezasHardware} {r.piezasHardware === 1 ? "equipo" : "equipos"})
+                      Inscripción ({r.t} {r.t === 1 ? "tienda" : "tiendas"})
                     </p>
-                    <p className="text-[12px] text-muted-foreground">Pago único</p>
+                    <p className="text-[12px] text-muted-foreground">Pago único al dar de alta</p>
                   </div>
                   <p className="text-[15px] font-extrabold tracking-[-0.03em]">
-                    {mxn(r.totalHardware)}
+                    {mxn(r.totalInscripcion)}
                   </p>
                 </Card>
-              )}
 
-              {esSaas ? (
-                <Card className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
-                    <CreditCard className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold tracking-[-0.02em]">Suscripción mensual</p>
-                    <p className="text-[12px] text-muted-foreground">
-                      {mxn(num(cuotaMensual))} fijo por tienda
+                {esSaas ? (
+                  <Card className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
+                      <CreditCard className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-bold tracking-[-0.02em]">
+                        Suscripción mensual
+                      </p>
+                      <p className="text-[12px] text-muted-foreground">
+                        {mxn(num(cuotaMensual))} fijo por tienda
+                      </p>
+                    </div>
+                    <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
+                      {mxn(r.suscripcionMensual)}
                     </p>
-                  </div>
-                  <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
-                    {mxn(r.suscripcionMensual)}
-                  </p>
-                </Card>
-              ) : (
-                <Card className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
-                    <Calculator className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold tracking-[-0.02em]">Comisión mensual</p>
-                    <p className="text-[12px] text-muted-foreground">
-                      {comisionPct || 0}% de {mxn(num(ventasMes))} por tienda
+                  </Card>
+                ) : (
+                  <Card className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
+                      <Calculator className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-bold tracking-[-0.02em]">Comisión mensual</p>
+                      <p className="text-[12px] text-muted-foreground">
+                        {comisionPct || 0}% de {mxn(num(ventasMes))} por tienda
+                      </p>
+                    </div>
+                    <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
+                      {mxn(r.comisionMensual)}
                     </p>
-                  </div>
-                  <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
-                    {mxn(r.comisionMensual)}
-                  </p>
-                </Card>
-              )}
+                  </Card>
+                )}
 
-              {r.rentaMensual > 0 && (
-                <Card className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
-                    <Calculator className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold tracking-[-0.02em]">Renta mensual</p>
-                    <p className="text-[12px] text-muted-foreground">Semanal × 4, por tienda</p>
-                  </div>
-                  <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
-                    {mxn(r.rentaMensual)}
-                  </p>
-                </Card>
-              )}
+                {r.rentaMensual > 0 && (
+                  <Card className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
+                      <Calculator className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-bold tracking-[-0.02em]">Renta mensual</p>
+                      <p className="text-[12px] text-muted-foreground">Semanal × 4, por tienda</p>
+                    </div>
+                    <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
+                      {mxn(r.rentaMensual)}
+                    </p>
+                  </Card>
+                )}
 
-              <Card className="border-primary/30 bg-primary/5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[14px] font-bold tracking-[-0.02em]">
-                      Proyección a 12 meses
-                    </p>
-                    <p className="text-[12px] text-muted-foreground">
-                      Inscripción{r.totalHardware > 0 ? " + hardware" : ""} + 12 meses de ingresos
+                <Card className="border-primary/30 bg-primary/5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[14px] font-bold tracking-[-0.02em]">
+                        Proyección a 12 meses
+                      </p>
+                      <p className="text-[12px] text-muted-foreground">
+                        Inscripción + 12 meses de ingresos
+                      </p>
+                    </div>
+                    <p className="text-[20px] font-extrabold tracking-[-0.03em] text-primary">
+                      {mxn(r.anual)}
                     </p>
                   </div>
-                  <p className="text-[20px] font-extrabold tracking-[-0.03em] text-primary">
-                    {mxn(r.anual)}
-                  </p>
-                </div>
-              </Card>
-            </div>
+                </Card>
+              </div>
+            )}
           </>
         )}
       </div>
