@@ -9,7 +9,6 @@ import {
   LogOut,
   Plus,
   Presentation,
-  User,
   Video,
   Wallet,
   X,
@@ -53,10 +52,6 @@ export const NAV_VENDEDOR: NavGroup[] = [
     items: [
       { label: "Biblioteca", to: "/recursos", icon: BookOpen },
     ],
-  },
-  {
-    titulo: "Cuenta",
-    items: [{ label: "Mi perfil", to: "/perfil", icon: User }],
   },
 ];
 
