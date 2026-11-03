@@ -123,18 +123,26 @@ function Cotizador() {
     hwPrecio,
   ]);
 
-  const opcionesModelo: { id: Modelo; titulo: string; desc: string; icono: typeof Repeat }[] = [
+  const opcionesModelo: {
+    id: Modelo;
+    titulo: string;
+    desc: string;
+    icono: typeof Repeat;
+    etiquetas?: string[];
+  }[] = [
     {
       id: "transaccional",
       titulo: "Transaccional",
       desc: "Kigo cobra una comisión sobre las ventas de la tienda",
       icono: Repeat,
+      etiquetas: ["Preparatorias", "Universidades", "Corporativos", "Locales externos"],
     },
     {
       id: "saas",
       titulo: "SAAS",
       desc: "Kigo cobra una cuota semanal a la tienda y una comisión mínima",
       icono: CreditCard,
+      etiquetas: ["Kinders", "Primarias", "Secundarias"],
     },
     {
       id: "hardware",
@@ -172,6 +180,18 @@ function Cotizador() {
                       {op.titulo}
                     </span>
                     <span className="text-[12px] text-muted-foreground">{op.desc}</span>
+                    {op.etiquetas && (
+                      <span className="mt-1 flex flex-wrap gap-1.5">
+                        {op.etiquetas.map((et) => (
+                          <span
+                            key={et}
+                            className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary"
+                          >
+                            {et}
+                          </span>
+                        ))}
+                      </span>
+                    )}
                   </button>
                 );
               })}
