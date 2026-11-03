@@ -127,13 +127,13 @@ function Cotizador() {
     {
       id: "transaccional",
       titulo: "Transaccional",
-      desc: "Ganas una comisión sobre las ventas de cada tienda",
+      desc: "Kigo cobra una comisión sobre las ventas de la tienda",
       icono: Repeat,
     },
     {
       id: "saas",
       titulo: "SAAS",
-      desc: "Ganas una cuota mensual fija por cada tienda",
+      desc: "Kigo cobra una cuota SAAS por tienda y una comisión mínima",
       icono: CreditCard,
     },
     {
