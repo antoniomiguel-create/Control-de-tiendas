@@ -185,7 +185,7 @@ function Cotizador() {
                         {op.etiquetas.map((et) => (
                           <span
                             key={et}
-                            className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary"
+                            className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground"
                           >
                             {et}
                           </span>
