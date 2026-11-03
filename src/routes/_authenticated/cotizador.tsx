@@ -133,7 +133,7 @@ function Cotizador() {
     {
       id: "saas",
       titulo: "SAAS",
-      desc: "Kigo cobra una cuota SAAS por tienda y una comisión mínima",
+      desc: "Kigo cobra una cuota semanal a la tienda y una comisión mínima",
       icono: CreditCard,
     },
     {
