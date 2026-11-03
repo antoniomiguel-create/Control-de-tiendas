@@ -41,12 +41,12 @@ const num = (s: string) => {
 
 type Modelo = "transaccional" | "saas" | "hardware";
 
-/** Catálogo de ejemplo: precios sugeridos, editables en la cotización. */
+/** Catálogo de ejemplo: renta semanal sugerida, editable en la cotización. */
 const HARDWARE = [
-  { id: "tablet", nombre: "Tablet punto de venta", precio: 3500 },
-  { id: "impresora", nombre: "Impresora de tickets", precio: 1800 },
-  { id: "cajon", nombre: "Cajón de dinero", precio: 1200 },
-  { id: "lector", nombre: "Lector de códigos QR", precio: 900 },
+  { id: "tablet", nombre: "Tablet punto de venta", precio: 350 },
+  { id: "impresora", nombre: "Impresora de tickets", precio: 180 },
+  { id: "cajon", nombre: "Cajón de dinero", precio: 120 },
+  { id: "lector", nombre: "Lector de códigos QR", precio: 90 },
 ] as const;
 
 type HardwareId = (typeof HARDWARE)[number]["id"];
@@ -66,10 +66,10 @@ function Cotizador() {
     lector: 0,
   });
   const [hwPrecio, setHwPrecio] = useState<Record<HardwareId, string>>({
-    tablet: "3500",
-    impresora: "1800",
-    cajon: "1200",
-    lector: "900",
+    tablet: "350",
+    impresora: "180",
+    cajon: "120",
+    lector: "90",
   });
 
   const cambiarCantidad = (id: HardwareId, delta: number) =>
@@ -147,7 +147,7 @@ function Cotizador() {
     {
       id: "hardware",
       titulo: "Hardware",
-      desc: "Vendes equipo a la tienda con un solo pago",
+      desc: "Renta de equipo semanal a la tienda",
       icono: Monitor,
     },
   ];
@@ -201,12 +201,12 @@ function Cotizador() {
           <>
             {esHardware ? (
               <Card>
-                <p className="text-[13px] text-muted-foreground">Total de hardware</p>
+                <p className="text-[13px] text-muted-foreground">Renta semanal de hardware</p>
                 <p className="mt-1 text-[30px] font-extrabold tracking-[-0.04em] text-primary">
                   {mxn(r.totalHardware)}
                 </p>
                 <p className="mt-1 text-[12px] text-muted-foreground">
-                  Pago único por {r.piezasHardware} {r.piezasHardware === 1 ? "equipo" : "equipos"}
+                  Cada semana por {r.piezasHardware} {r.piezasHardware === 1 ? "equipo" : "equipos"}
                 </p>
               </Card>
             ) : (
@@ -360,7 +360,7 @@ function Cotizador() {
                                 }))
                               }
                             />
-                            <span>c/u</span>
+                            <span>c/u por semana</span>
                           </label>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
@@ -390,7 +390,7 @@ function Cotizador() {
                   })}
                 </Card>
                 <p className="-mt-2 text-[11px] text-muted-foreground">
-                  Precios sugeridos de ejemplo. Puedes cambiarlos en cada equipo.
+                  Rentas semanales de ejemplo. Puedes cambiarlas en cada equipo.
                 </p>
               </>
             )}
@@ -426,8 +426,8 @@ function Cotizador() {
                 <Card className="border-primary/30 bg-primary/5">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[14px] font-bold tracking-[-0.02em]">Total a pagar</p>
-                      <p className="text-[12px] text-muted-foreground">Pago único</p>
+                      <p className="text-[14px] font-bold tracking-[-0.02em]">Renta semanal</p>
+                      <p className="text-[12px] text-muted-foreground">Cobro cada semana</p>
                     </div>
                     <p className="text-[20px] font-extrabold tracking-[-0.03em] text-primary">
                       {mxn(r.totalHardware)}
