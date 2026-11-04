@@ -56,7 +56,6 @@ function Cotizador() {
   const [tiendas, setTiendas] = useState("1");
   const [costoInscripcion, setCostoInscripcion] = useState("2000");
   const [comisionPct, setComisionPct] = useState("15");
-  const [ventasMes, setVentasMes] = useState("30000");
   const [cuotaMensual, setCuotaMensual] = useState("");
   const [rentaSemanal, setRentaSemanal] = useState("");
   const [hwCantidad, setHwCantidad] = useState<Record<HardwareId, number>>({
@@ -81,17 +80,12 @@ function Cotizador() {
   const r = useMemo(() => {
     const t = Math.max(0, Math.floor(num(tiendas)));
     const insc = num(costoInscripcion);
-    const pct = num(comisionPct);
-    const ventas = num(ventasMes);
     const cuota = num(cuotaMensual);
     const renta = num(rentaSemanal) * 4;
     const totalInscripcion = t * insc;
-    const comisionMensual = t * ((ventas * pct) / 100);
     const suscripcionMensual = t * cuota;
     const rentaMensual = t * renta;
-    const ingresoMensual = esSaas
-      ? suscripcionMensual + rentaMensual
-      : comisionMensual + rentaMensual;
+    const ingresoMensual = suscripcionMensual + rentaMensual;
     const totalHardware = HARDWARE.reduce(
       (suma, h) => suma + hwCantidad[h.id] * num(hwPrecio[h.id]),
       0,
@@ -102,7 +96,6 @@ function Cotizador() {
     return {
       t,
       totalInscripcion,
-      comisionMensual,
       suscripcionMensual,
       rentaMensual,
       ingresoMensual,
@@ -111,17 +104,7 @@ function Cotizador() {
       primerMes,
       anual,
     };
-  }, [
-    tiendas,
-    costoInscripcion,
-    comisionPct,
-    ventasMes,
-    cuotaMensual,
-    rentaSemanal,
-    esSaas,
-    hwCantidad,
-    hwPrecio,
-  ]);
+  }, [tiendas, costoInscripcion, cuotaMensual, rentaSemanal, hwCantidad, hwPrecio]);
 
   const opcionesModelo: {
     id: Modelo;
@@ -209,17 +192,17 @@ function Cotizador() {
                   Cada semana por {r.piezasHardware} {r.piezasHardware === 1 ? "equipo" : "equipos"}
                 </p>
               </Card>
-            ) : (
+            ) : esSaas ? (
               <Card>
                 <p className="text-[13px] text-muted-foreground">Ingreso estimado el primer mes</p>
                 <p className="mt-1 text-[30px] font-extrabold tracking-[-0.04em] text-primary">
                   {mxn(r.primerMes)}
                 </p>
                 <p className="mt-1 text-[12px] text-muted-foreground">
-                  Inscripción + {esSaas ? "suscripción" : "comisión"} + renta del primer mes
+                  Inscripción + suscripción + renta del primer mes
                 </p>
               </Card>
-            )}
+            ) : null}
 
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-muted-foreground">Modelo:</span>
@@ -279,50 +262,37 @@ function Cotizador() {
                       />
                     </label>
                   ) : (
-                    <>
-                      <label className="block">
-                        <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                          Comisión sobre ventas (%)
-                        </span>
-                        <input
-                          className={inputClass}
-                          inputMode="decimal"
-                          value={comisionPct}
-                          onChange={(e) => setComisionPct(e.target.value)}
-                          placeholder="15"
-                        />
-                      </label>
-
-                      <label className="block">
-                        <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                          Ventas mensuales promedio por tienda
-                        </span>
-                        <input
-                          className={inputClass}
-                          inputMode="numeric"
-                          value={ventasMes}
-                          onChange={(e) => setVentasMes(e.target.value)}
-                          placeholder="30000"
-                        />
-                      </label>
-                    </>
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                        Comisión sobre ventas (%)
+                      </span>
+                      <input
+                        className={inputClass}
+                        inputMode="decimal"
+                        value={comisionPct}
+                        onChange={(e) => setComisionPct(e.target.value)}
+                        placeholder="15"
+                      />
+                    </label>
                   )}
 
-                  <label className="block">
-                    <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                      Renta semanal de la tienda (opcional)
-                    </span>
-                    <input
-                      className={inputClass}
-                      inputMode="numeric"
-                      value={rentaSemanal}
-                      onChange={(e) => setRentaSemanal(e.target.value)}
-                      placeholder="1500"
-                    />
-                    <span className="mt-1 block text-[11px] text-muted-foreground">
-                      Ej. Renta semanal {mxn(1500)}
-                    </span>
-                  </label>
+                  {esSaas && (
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                        Renta semanal de la tienda (opcional)
+                      </span>
+                      <input
+                        className={inputClass}
+                        inputMode="numeric"
+                        value={rentaSemanal}
+                        onChange={(e) => setRentaSemanal(e.target.value)}
+                        placeholder="1500"
+                      />
+                      <span className="mt-1 block text-[11px] text-muted-foreground">
+                        Ej. Renta semanal {mxn(1500)}
+                      </span>
+                    </label>
+                  )}
                 </div>
               </>
             )}
@@ -395,7 +365,7 @@ function Cotizador() {
               </>
             )}
 
-            <SectionTitle>Resultado</SectionTitle>
+            {(esHardware || esSaas) && <SectionTitle>Resultado</SectionTitle>}
             {esHardware ? (
               <div className="space-y-2 pb-8">
                 {r.piezasHardware === 0 ? (
@@ -435,7 +405,7 @@ function Cotizador() {
                   </div>
                 </Card>
               </div>
-            ) : (
+            ) : esSaas ? (
               <div className="space-y-2 pb-8">
                 <Card className="flex items-center gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
@@ -452,39 +422,20 @@ function Cotizador() {
                   </p>
                 </Card>
 
-                {esSaas ? (
-                  <Card className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
-                      <CreditCard className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-bold tracking-[-0.02em]">
-                        Suscripción mensual
-                      </p>
-                      <p className="text-[12px] text-muted-foreground">
-                        {mxn(num(cuotaMensual))} fijo por tienda
-                      </p>
-                    </div>
-                    <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
-                      {mxn(r.suscripcionMensual)}
+                <Card className="flex items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
+                    <CreditCard className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-bold tracking-[-0.02em]">Suscripción mensual</p>
+                    <p className="text-[12px] text-muted-foreground">
+                      {mxn(num(cuotaMensual))} fijo por tienda
                     </p>
-                  </Card>
-                ) : (
-                  <Card className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted">
-                      <Calculator className="h-5 w-5 text-muted-foreground" strokeWidth={2.4} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-bold tracking-[-0.02em]">Comisión mensual</p>
-                      <p className="text-[12px] text-muted-foreground">
-                        {comisionPct || 0}% de {mxn(num(ventasMes))} por tienda
-                      </p>
-                    </div>
-                    <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
-                      {mxn(r.comisionMensual)}
-                    </p>
-                  </Card>
-                )}
+                  </div>
+                  <p className="text-[15px] font-extrabold tracking-[-0.03em] text-success">
+                    {mxn(r.suscripcionMensual)}
+                  </p>
+                </Card>
 
                 {r.rentaMensual > 0 && (
                   <Card className="flex items-center gap-3">
@@ -517,7 +468,7 @@ function Cotizador() {
                   </div>
                 </Card>
               </div>
-            )}
+            ) : null}
           </>
         )}
       </div>
