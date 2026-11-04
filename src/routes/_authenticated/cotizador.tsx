@@ -42,12 +42,7 @@ const num = (s: string) => {
 type Modelo = "transaccional" | "saas" | "hardware";
 
 /** Catálogo de ejemplo: renta semanal sugerida, editable en la cotización. */
-const HARDWARE = [
-  { id: "tablet", nombre: "Tablet punto de venta", precio: 350 },
-  { id: "impresora", nombre: "Impresora de tickets", precio: 180 },
-  { id: "cajon", nombre: "Cajón de dinero", precio: 120 },
-  { id: "lector", nombre: "Lector de códigos QR", precio: 90 },
-] as const;
+const HARDWARE = [{ id: "telpo", nombre: "Terminal Telpo", precio: 350 }] as const;
 
 type HardwareId = (typeof HARDWARE)[number]["id"];
 
@@ -67,16 +62,10 @@ function Cotizador() {
   const [comisionSaas, setComisionSaas] = useState(String(COMISION_SAAS_MIN));
   const [rentaSemanal, setRentaSemanal] = useState("");
   const [hwCantidad, setHwCantidad] = useState<Record<HardwareId, number>>({
-    tablet: 0,
-    impresora: 0,
-    cajon: 0,
-    lector: 0,
+    telpo: 0,
   });
   const [hwPrecio, setHwPrecio] = useState<Record<HardwareId, string>>({
-    tablet: "350",
-    impresora: "180",
-    cajon: "120",
-    lector: "90",
+    telpo: "350",
   });
 
   const cambiarCantidad = (id: HardwareId, delta: number) =>
@@ -397,7 +386,7 @@ function Cotizador() {
                   })}
                 </Card>
                 <p className="-mt-2 text-[11px] text-muted-foreground">
-                  Rentas semanales de ejemplo. Puedes cambiarlas en cada equipo.
+                  Renta semanal de ejemplo. Puedes cambiarla.
                 </p>
               </>
             )}
