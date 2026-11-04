@@ -51,9 +51,14 @@ const HARDWARE = [
 
 type HardwareId = (typeof HARDWARE)[number]["id"];
 
+/** Tope de campos de nombre que se muestran, para no llenar la pantalla. */
+const MAX_TIENDAS = 20;
+
 function Cotizador() {
   const [modelo, setModelo] = useState<Modelo | null>(null);
   const [tiendas, setTiendas] = useState("1");
+  const [nombresTiendas, setNombresTiendas] = useState<string[]>([]);
+  const [nombreDueno, setNombreDueno] = useState("");
   const [costoInscripcion, setCostoInscripcion] = useState("2000");
   const [comisionPct, setComisionPct] = useState("15");
   const [cuotaMensual, setCuotaMensual] = useState("");
@@ -73,6 +78,15 @@ function Cotizador() {
 
   const cambiarCantidad = (id: HardwareId, delta: number) =>
     setHwCantidad((prev) => ({ ...prev, [id]: Math.max(0, prev[id] + delta) }));
+
+  const camposTienda = Math.min(MAX_TIENDAS, Math.max(0, Math.floor(num(tiendas))));
+
+  const cambiarNombreTienda = (i: number, valor: string) =>
+    setNombresTiendas((prev) => {
+      const sig = [...prev];
+      sig[i] = valor;
+      return sig;
+    });
 
   const esSaas = modelo === "saas";
   const esHardware = modelo === "hardware";
@@ -227,8 +241,45 @@ function Cotizador() {
                       className={inputClass}
                       inputMode="numeric"
                       value={tiendas}
-                      onChange={(e) => setTiendas(e.target.value)}
+                      onChange={(e) => setTiendas(e.target.value.replace(/\D/g, ""))}
                       placeholder="1"
+                    />
+                  </label>
+
+                  {Array.from({ length: camposTienda }, (_, i) => (
+                    <label key={i} className="block">
+                      <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                        {camposTienda === 1
+                          ? "Nombre de la tienda"
+                          : `Nombre de la tienda ${i + 1}`}
+                      </span>
+                      <input
+                        id={`cot-tienda-${i}`}
+                        className={inputClass}
+                        value={nombresTiendas[i] ?? ""}
+                        maxLength={100}
+                        onChange={(e) => cambiarNombreTienda(i, e.target.value)}
+                        placeholder="Ej: Café Central"
+                      />
+                    </label>
+                  ))}
+                  {num(tiendas) > MAX_TIENDAS && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Se muestran los primeros {MAX_TIENDAS} nombres.
+                    </p>
+                  )}
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                      Nombre del dueño
+                    </span>
+                    <input
+                      id="cot-dueno"
+                      className={inputClass}
+                      value={nombreDueno}
+                      maxLength={100}
+                      onChange={(e) => setNombreDueno(e.target.value)}
+                      placeholder="Ej: Diego Paredes"
                     />
                   </label>
 
