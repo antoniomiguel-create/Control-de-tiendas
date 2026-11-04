@@ -315,7 +315,7 @@ function Cotizador() {
                   {esSaas && (
                     <label className="block">
                       <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                        Renta semanal por tienda
+                        Renta semanal por tienda (no incluye IVA)
                       </span>
                       <input
                         className={inputClass}
