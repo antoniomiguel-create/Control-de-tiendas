@@ -54,15 +54,14 @@ type HardwareId = (typeof HARDWARE)[number]["id"];
 /** Tope de campos de nombre que se muestran, para no llenar la pantalla. */
 const MAX_TIENDAS = 20;
 
-/** Comisión SAAS: arranca en el mínimo y se puede subir hasta el máximo. */
-const COMISION_SAAS_MIN = 3.6;
-const COMISION_SAAS_MAX = 5;
+/** Comisión SAAS: arranca en el mínimo y se puede subir sin tope. */
+const COMISION_SAAS_MIN = 3.5;
 
 function Cotizador() {
   const [modelo, setModelo] = useState<Modelo | null>(null);
   const [tiendas, setTiendas] = useState("1");
   const [nombresTiendas, setNombresTiendas] = useState<string[]>([]);
-  const [nombreDueno, setNombreDueno] = useState("");
+  const [dirigidaA, setDirigidaA] = useState("");
   const [costoInscripcion, setCostoInscripcion] = useState("2000");
   const [comisionPct, setComisionPct] = useState("15");
   const [comisionSaas, setComisionSaas] = useState(String(COMISION_SAAS_MIN));
@@ -104,14 +103,9 @@ function Cotizador() {
     return { totalHardware, piezasHardware };
   }, [hwCantidad, hwPrecio]);
 
-  // Al salir del campo, deja la comisión SAAS dentro del rango permitido.
+  // Al salir del campo, no deja la comisión SAAS por debajo del mínimo.
   const ajustarComisionSaas = () => {
-    const valor = num(comisionSaas);
-    const ajustado = Math.min(
-      COMISION_SAAS_MAX,
-      Math.max(COMISION_SAAS_MIN, valor || COMISION_SAAS_MIN),
-    );
-    setComisionSaas(String(ajustado));
+    setComisionSaas(String(Math.max(COMISION_SAAS_MIN, num(comisionSaas))));
   };
 
   const opcionesModelo: {
@@ -255,33 +249,35 @@ function Cotizador() {
 
                   <label className="block">
                     <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                      Nombre del dueño
+                      ¿A quién va dirigida la cotización?
                     </span>
                     <input
-                      id="cot-dueno"
+                      id="cot-dirigida"
                       className={inputClass}
-                      value={nombreDueno}
+                      value={dirigidaA}
                       maxLength={100}
-                      onChange={(e) => setNombreDueno(e.target.value)}
-                      placeholder="Ej: Diego Paredes"
+                      onChange={(e) => setDirigidaA(e.target.value)}
+                      placeholder="Nombre de la persona"
                     />
                   </label>
 
-                  <label className="block">
-                    <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
-                      Costo de inscripción por tienda
-                    </span>
-                    <input
-                      className={inputClass}
-                      inputMode="numeric"
-                      value={costoInscripcion}
-                      onChange={(e) => setCostoInscripcion(e.target.value)}
-                      placeholder="2000"
-                    />
-                    <span className="mt-1 block text-[11px] text-muted-foreground">
-                      Normalmente cobramos {mxn(2000)} por tienda
-                    </span>
-                  </label>
+                  {!esSaas && (
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] font-bold tracking-[-0.01em]">
+                        Costo de inscripción por tienda
+                      </span>
+                      <input
+                        className={inputClass}
+                        inputMode="numeric"
+                        value={costoInscripcion}
+                        onChange={(e) => setCostoInscripcion(e.target.value)}
+                        placeholder="2000"
+                      />
+                      <span className="mt-1 block text-[11px] text-muted-foreground">
+                        Normalmente cobramos {mxn(2000)} por tienda
+                      </span>
+                    </label>
+                  )}
 
                   {esSaas ? (
                     <label className="block">
@@ -298,7 +294,7 @@ function Cotizador() {
                         placeholder={String(COMISION_SAAS_MIN)}
                       />
                       <span className="mt-1 block text-[11px] text-muted-foreground">
-                        Mínimo {COMISION_SAAS_MIN}%, se puede subir hasta {COMISION_SAAS_MAX}%
+                        Mínimo {COMISION_SAAS_MIN}%, se puede subir lo que sea necesario
                       </span>
                     </label>
                   ) : (
