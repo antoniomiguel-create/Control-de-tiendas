@@ -41,8 +41,8 @@ const num = (s: string) => {
 
 type Modelo = "transaccional" | "saas" | "hardware";
 
-/** Catálogo de ejemplo: renta semanal sugerida, editable en la cotización. */
-const HARDWARE = [{ id: "telpo", nombre: "Terminal Telpo", precio: 350 }] as const;
+/** Equipo en renta: precio fijo por semana, sin IVA. El vendedor solo elige la cantidad. */
+const HARDWARE = [{ id: "telpo", nombre: "Terminal Telpo", precio: 125 }] as const;
 
 type HardwareId = (typeof HARDWARE)[number]["id"];
 
@@ -64,9 +64,6 @@ function Cotizador() {
   const [hwCantidad, setHwCantidad] = useState<Record<HardwareId, number>>({
     telpo: 0,
   });
-  const [hwPrecio, setHwPrecio] = useState<Record<HardwareId, string>>({
-    telpo: "350",
-  });
 
   const cambiarCantidad = (id: HardwareId, delta: number) =>
     setHwCantidad((prev) => ({ ...prev, [id]: Math.max(0, prev[id] + delta) }));
@@ -84,13 +81,10 @@ function Cotizador() {
   const esHardware = modelo === "hardware";
 
   const r = useMemo(() => {
-    const totalHardware = HARDWARE.reduce(
-      (suma, h) => suma + hwCantidad[h.id] * num(hwPrecio[h.id]),
-      0,
-    );
+    const totalHardware = HARDWARE.reduce((suma, h) => suma + hwCantidad[h.id] * h.precio, 0);
     const piezasHardware = HARDWARE.reduce((suma, h) => suma + hwCantidad[h.id], 0);
     return { totalHardware, piezasHardware };
-  }, [hwCantidad, hwPrecio]);
+  }, [hwCantidad]);
 
   // Al salir del campo, no deja la comisión SAAS por debajo del mínimo.
   const ajustarComisionSaas = () => {
@@ -180,7 +174,8 @@ function Cotizador() {
                   {mxn(r.totalHardware)}
                 </p>
                 <p className="mt-1 text-[12px] text-muted-foreground">
-                  Cada semana por {r.piezasHardware} {r.piezasHardware === 1 ? "equipo" : "equipos"}
+                  Cada semana + IVA, por {r.piezasHardware}{" "}
+                  {r.piezasHardware === 1 ? "equipo" : "equipos"}
                 </p>
               </Card>
             ) : null}
@@ -341,23 +336,9 @@ function Cotizador() {
                       <div key={h.id} className="flex items-center gap-3 px-4 py-3.5">
                         <div className="min-w-0 flex-1">
                           <p className="text-[14px] font-bold tracking-[-0.02em]">{h.nombre}</p>
-                          <label className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
-                            <span>$</span>
-                            <input
-                              id={`hw-precio-${h.id}`}
-                              aria-label={`Precio de ${h.nombre}`}
-                              className="w-20 rounded-lg border border-border bg-background px-2 py-1 text-[12px] font-semibold text-foreground"
-                              inputMode="numeric"
-                              value={hwPrecio[h.id]}
-                              onChange={(e) =>
-                                setHwPrecio((prev) => ({
-                                  ...prev,
-                                  [h.id]: e.target.value.replace(/\D/g, ""),
-                                }))
-                              }
-                            />
-                            <span>c/u por semana</span>
-                          </label>
+                          <p className="mt-0.5 text-[12px] text-muted-foreground">
+                            {mxn(h.precio)} + IVA c/u por semana
+                          </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           <button
@@ -385,9 +366,6 @@ function Cotizador() {
                     );
                   })}
                 </Card>
-                <p className="-mt-2 text-[11px] text-muted-foreground">
-                  Renta semanal de ejemplo. Puedes cambiarla.
-                </p>
               </>
             )}
 
@@ -409,11 +387,11 @@ function Cotizador() {
                       <div className="min-w-0 flex-1">
                         <p className="text-[14px] font-bold tracking-[-0.02em]">{h.nombre}</p>
                         <p className="text-[12px] text-muted-foreground">
-                          {hwCantidad[h.id]} × {mxn(num(hwPrecio[h.id]))}
+                          {hwCantidad[h.id]} × {mxn(h.precio)} + IVA
                         </p>
                       </div>
                       <p className="text-[15px] font-extrabold tracking-[-0.03em]">
-                        {mxn(hwCantidad[h.id] * num(hwPrecio[h.id]))}
+                        {mxn(hwCantidad[h.id] * h.precio)}
                       </p>
                     </Card>
                   ))
@@ -423,7 +401,9 @@ function Cotizador() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[14px] font-bold tracking-[-0.02em]">Renta semanal</p>
-                      <p className="text-[12px] text-muted-foreground">Cobro cada semana</p>
+                      <p className="text-[12px] text-muted-foreground">
+                        Cobro cada semana, no incluye IVA
+                      </p>
                     </div>
                     <p className="text-[20px] font-extrabold tracking-[-0.03em] text-primary">
                       {mxn(r.totalHardware)}
